@@ -37,4 +37,4 @@ Rant aside, lets dive into some output.  There are a few differences that I want
 
 Below is a scattergraph that is similar, but not exactly the same, as the one in the post. Because this looks at a larger timeframe, the variance is much larger than what you see in the original post.
 
-!(Scatter)["figure/scatter.png"]
+![Scatter](https://raw.github.com/Btibert3/sk-delta-apps-yield/master/figure/scatter.png)
