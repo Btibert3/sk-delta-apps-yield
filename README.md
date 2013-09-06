@@ -24,7 +24,7 @@ Unlike the S&K post, I am going to do two things:
 1. Demostrate documented code
 2. Build a few models to try to help explain the changes in yield relative to a few factors.
 
-To follow along, run the contents of the `college-clean.r` to build and save a dataframe (dataset) and then walk through the `main-analysis.r` file.  I attempted to comment as much as possible in case you are like me and learn by example.
+To follow along, run the contents of  `college-clean.r` to build and save a dataframe (dataset) and then walk through the `main-analysis.r` file.  I attempted to comment as much as possible in case you are like me and learn by example.
 
 I do not intend for this repo to be viewed as a comprehensive analysis with specific conclusions, but more of a tutorial
 on how analysts in EM might be able to conduct similar studies themselves without requiring expensive software.
