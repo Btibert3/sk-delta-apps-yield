@@ -1,7 +1,7 @@
 Code to Follow Along with S&K Post
 ===================
 
-Code to replicate the [Scannel and Kurz Post](http://www.scannellkurz.com/blog/increasing_applicant_pool_monday_musings) on 
+This repo contains the code to replicate the [Scannel and Kurz Post](http://www.scannellkurz.com/blog/increasing_applicant_pool_monday_musings) on 
 why huge swings in app growth might not always be good for Enrollment Managers.
 
 One important note.  I have no affiliation with S&K.  I simply wanted to build upon a common idea and produce code so others can run and build upon this very important concept in Enrollment Management.
