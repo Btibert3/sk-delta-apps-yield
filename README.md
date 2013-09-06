@@ -81,7 +81,7 @@ For this post, I filtered the graph to only include the 742 schools we have been
 
 ![network](https://raw.github.com/Btibert3/sk-delta-apps-yield/master/figure/network.png)
 
-I know it looks like a big hairball, but I do love how easy it is to see how schools cluster together.  
+I know it looks like a big hairball, but I do love how you start to see the "shape" of the comeptetive market as it pertains to student's researching our schools. 
 
 Quick aside, I hypothesize that these clusters of schools represent an institution's competitive market.  While it could be the case, I believe too often we assume our market is based primarily on geographic market.  I believe studying this network structure will help us find new strategic markets, identify areas of opportunity, etc when recruiting and planning travel.
 
