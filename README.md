@@ -1,8 +1,10 @@
-sk-delta-apps-yield
+Code to Follow Along with S&K Post
 ===================
 
 Code to replicate the [Scannel and Kurz Post](http://www.scannellkurz.com/blog/increasing_applicant_pool_monday_musings) on 
 why huge swings in app growth might not always be good for Enrollment Managers.
+
+One important note.  I have no affiliation with S&K.  I simply wanted to build upon a common idea and produce code so others can run and build upon this very important concept in Enrollment Management.
 
 ## About
 
@@ -25,5 +27,14 @@ on how analysts in EM might be able to conduct similar analyses themselves witho
 
 ## Analysis
 
+I won't go too in-depth with re-blogging the concepts that S&K has already done well, but basically this in an important topic that Enrollment Managers need to start thinking about.  Here are my two cents.  Tactics like waiving app fees, Fast Apps, apps that only require a name, etc., can *potentially* have disastrous effects on your yield planning.  In my opinion, stabilzing (and obviously improving yield) is THE main goal year to year; everything else is just noise.  Therefore, if you play games and introduce more variance in yield, your May 1 will become alot more stressful.
 
+Rant aside, lets dive into some output.  There are a few differences that I want to list:
 
+- Instead of looking at 1 year, I looked at changes in application and yield from 2007 to 2012
+- To be included in the anslysis, a school had to report data in both years.  All other schools were excluded.
+- This resulted in 742 Public 4-year  (Sector = 1) and Private 4-year (Sector = 2) schools
+
+Below is a scattergraph that is similar, but not exactly the same, as the one in the post. Because this looks at a larger timeframe, the variance is much larger than what you see in the original post.
+
+!(Scatter)["figure/scatter.png"]

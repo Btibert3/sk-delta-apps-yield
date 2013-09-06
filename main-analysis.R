@@ -1,6 +1,3 @@
-## directory
-setwd("~/Dropbox/Projects/sk-delta-apps-yield")
-
 ## load the data
 masterdf = readRDS("data/masterdf.rds")
 
@@ -10,7 +7,7 @@ library(ggplot2)
 library(FNN)
 library(rpart)
 library(igraph)
-library(ROCR)
+
 
 #==============================================================================
 ## Basic Analysis
@@ -91,12 +88,12 @@ prop.table(tab.sector, 2)
 #==============================================================================
 
 
-with(masterdf, table(sector))
-with(masterdf, table(obereg))
-with(masterdf, table(hloffer))
-with(masterdf, table(carnegie))
-
-TODO: either group or not include some of the variables
+# with(masterdf, table(sector))
+# with(masterdf, table(obereg))
+# with(masterdf, table(hloffer))
+# with(masterdf, table(carnegie))
+# 
+# TODO: either group or not include some of the variables
 
 ## app change
 f1 = formula(app_delta_pct ~ factor(sector) + factor(obereg))
