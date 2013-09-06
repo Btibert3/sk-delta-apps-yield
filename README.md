@@ -49,7 +49,7 @@ Below is a scattergraph that is similar, but not exactly the same, as the one in
 
 ![Scatter](https://raw.github.com/Btibert3/sk-delta-apps-yield/master/figure/scatter.png)
 
-The plot is similar in that we see a downward trend; larger app increases over 5 years tended to experience large drops in yield rates.  
+The plot is similar in that we see a downward trend; larger app increases over 5 years tended to experience large drops in yield rates.  However, I find it interesting that the quadrant with the largest variance is `Apps Up / Yield Down`.
 
 I segment the plot by median values.  Here are how the schools are distributed by sector.  The value is a column % within each sector, with 1 = Public 4-year, 2 = Private 4-year.
 
