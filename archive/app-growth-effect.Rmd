@@ -1,0 +1,296 @@
+Change in Applications and Yield
+========================================================
+
+## Overview
+Today (8/26) Scannel and Kurz posted something that I have been been thinking about for some time now.  I have done similar analyses (not posted) in the past, so I wanted to share some code for those of in #emchat that think about data and don't want to use (or hace access to) expensive software like SPSS or SAS.  There is a rather steep learning curve to `R`, but chances are, you already have some people in your division that have some stats/programming experience.
+
+## About this post
+Use `R` to grab the IPEDS data we need and build a dataset to evaluate the changes in applications and yield rates between 2007 and 2012.  Unlike the S&K post, I want to look at a larger timeline to eliminate erratic chagnes from year to year.  
+
+## About the data
+I love IPEDS data, but there are quite a few critcisms about the data. Please oblige my rant given the technology we have today:
+
+- It takes us way to long to report data and for it to be released
+- Why does it take way too long for us to report Fiscal year data?
+- Why dont we ask for more detailed information about application data
+- why not ask about how much we spend on recruitment and marketing
+
+## Get the data
+
+Let's setup our R environment:
+
+```{r setup, cache=TRUE}
+## set the working directory for the project
+setwd("~/Dropbox/Projects/sk-delta-apps-yield")
+## create a directory to hold the IPDS data we download
+dir.create("raw", showWarnings=FALSE)
+## load the libraries
+library(plyr)
+library(reshape2)
+library(ggplot2)
+library(stringr)
+
+```
+
+Now lets grab the data.  If you visit the TODO: Ipeds data site, you will notice a common naming pattern for the data files.  We can use this structure to tell R to download the files onto a system.  No manually clicking!
+
+```{r collect, cache=TRUE}
+## Build the variables we need to crawl the data
+YEARS = c(2007, 2012)
+BASE = "http://nces.ed.gov/ipeds/datacenter/data/IC"
+## For each survey, grab the data
+for (Y in YEARS) {
+  URL = paste0(BASE, Y, ".zip")
+  fname = paste0("ic", Y, ".zip")
+  download.file(url = URL, 
+                destfile = paste0("raw/", fname))
+}
+## get the directory information -- attach type of school, etc.
+BASE = "http://nces.ed.gov/ipeds/datacenter/data/HD"
+for (Y in YEARS) {
+  URL = paste0(BASE, Y, ".zip")
+  fname = paste0("hd", Y, ".zip")
+  download.file(url = URL, 
+                destfile = paste0("raw/", fname))
+}
+
+```
+
+Now we need parse the zip files and keep the contents in the `raw` directory.
+
+```{r parsezip, cache=TRUE}
+FILES = list.files("raw", full.names=TRUE)
+for (FILE in FILES)  {
+  unzip(FILE, exdir = "raw/")
+}
+
+```
+
+
+## Build the dataset
+
+Now that we have the two CSV files, we need to bring them into `R`.  The key is that we want to think about how to shape and reshape the data. For this, we are going to bring in each file and stack them, meaning 1 set of rows for each survey year.  The trick here is that you need to be aware that some columns **may** be in one year and not another.  To get around this in R, we use the `rbind.fill` command from the `plyr` package.  Basically, this stacks the datasets and add variables automagically when one dataset has a columns not present in another.  Trust me, this function will save you more often than you could ever imagine.
+
+```{r buildds, cache=TRUE}
+## parse the IC datasets into 1 dataframe
+FILES = list.files("raw", 
+                   pattern = "ic.*\\.csv",
+                   full.names=TRUE)
+ic = data.frame(stringsAsFactors=FALSE)
+for (FILE in FILES)  {
+  tmp = read.table(FILE, 
+                   sep=",", 
+                   header = TRUE, 
+                   stringsAsFactors=F)
+  # fix the colnames to lowercase
+  colnames(tmp) = tolower(colnames(tmp))
+  # extract the year from the filename -- example of regex to parse date
+  yr = str_extract(FILE, "20[0-9]{2}")
+  tmp$year = yr
+  ic = rbind.fill(ic, tmp)
+}
+
+## parse the hd datasets
+FILES = list.files("raw", 
+                   pattern = "hd.*\\.csv",
+                   full.names=TRUE)
+hd = data.frame(stringsAsFactors=FALSE)
+for (FILE in FILES)  {
+  tmp = read.table(FILE, 
+                   sep=",", 
+                   header = TRUE, 
+                   stringsAsFactors=F)
+  # fix the colnames to lowercase
+  colnames(tmp) = tolower(colnames(tmp))
+  # extract the year from the filename -- example of regex to parse date
+  yr = str_extract(FILE, "20[0-9]{2}")
+  tmp$year = yr
+  hd = rbind.fill(hd, tmp)
+}
+
+```
+
+Let's see what we have.
+
+```{r explore, cache=TRUE}
+dim(ic)
+colnames(ic)
+dim(hd)
+colnames(hd)
+
+```
+
+Now we will merge the 2 surveys into a single master dataframe. We will only keep rows that match on unitid and year in both files.
+
+```{r merge, cache=TRUE}
+df = merge(hd, 
+           ic, 
+           by.x = c("unitid", "year"), 
+           by.y = c("unitid", "year"))
+
+```
+
+One thing we need to be **very** mindful of is the fact that some schools report year-old applications data.  For example, on the 2012 survey, they may actually report 2011 application data instead of 2012.  In this day and age, I don't understand why this still happens, but it does quite a bit.  Nonetheless, we need to keep records where the institutions reported current year info (2007 and 2012). To do this, we use the appdate variable and keep only those records where the value = 2. and are 4 year public/private not-for-profit schools.  Lastly, we will follow S&K's logic and keep only institutions that recieve more than 1K in apps per year.
+
+```{r filter, cache=TRUE}
+df.f = subset(df, appdate == 2 & sector %in% c(1,2) & deggrant == 1)
+df.f$applcn = as.numeric(df.f$applcn)
+df.f = subset(df.f, applcn >= 1000)
+
+```
+
+How many schools are present in each year?
+
+```{r cache=TRUE}
+with(df.f, table(year))
+
+```
+
+This is the first indication that some schools have date in 1 year and not the other.  Since we want to calculate the change between 2007 and 2012, we need to keep schools that have reported data in both years.  
+
+```{r fullreporting, cache=TRUE}
+## look at how many times a school is in the dataset
+schools = ddply(df.f, .(unitid), summarise, recs = length(unitid))
+## keep only those that are in both years
+schools = subset(schools, recs == 2)
+## filter the dataset
+schools = subset(df.f, unitid %in% schools$unitid)
+
+
+```
+
+Before we start to put the data into a useable format, let's calculate some basic admission metrics.
+
+```{r calcmetrics, cache=TRUE}
+schools$enrlt = as.numeric(schools$enrlt)
+schools$admssn = as.numeric(schools$admssn)
+schools = mutate(schools,
+                  yrate = enrlt/admssn)
+
+```
+
+Lastly, we need to reshape the data.  Basically, each school is two rows in our dataset, one for each year.  We need to get this into a more managenable format for data analysis, which is 1 row per school.  Luckily, reshaping data is easy using the `reshape2` package.  
+
+```{r reshape, cache=TRUE}
+masterdf = subset(schools,
+                  subset = year == 2012,
+                  select = c('unitid', 'instnm', 'sector', 
+                             'obereg', 'stabbr', 'hloffer',
+                             'carnegie', 'longitud', 'latitude'))
+apps = dcast(schools, unitid ~ year, value.var="applcn")
+names(apps)[2] = "apps7"
+names(apps)[3] = "apps12"
+admits = dcast(schools, unitid ~ year, value.var="admssn")
+names(admits)[2] = "admits7"
+names(admits)[3] = "admits12"
+enroll = dcast(schools, unitid ~ year, value.var="enrlt")
+names(enroll)[2] = "enroll7"
+names(enroll)[3] = "enroll12"
+yrate = dcast(schools, unitid ~ year, value.var="yrate")
+names(yrate)[2] = "yrate7"
+names(yrate)[3] = "yrate12"
+## bind the data - uses same variable, in this case, unitid
+masterdf = merge(masterdf, apps)
+masterdf = merge(masterdf, admits)
+masterdf = merge(masterdf, enroll)
+masterdf = merge(masterdf, yrate)
+## finally, calc change metrics
+masterdf = mutate(masterdf,
+                  app_delta = apps12 - apps7,
+                  app_delta_pct = app_delta / apps7,
+                  yrate_delta = yrate12 - yrate7)
+
+```
+
+## Analyze the data
+
+Now that we have done the hardest part by collecting and cleaning the data, let's have some fun.  First, lets take a peak at the distribution of the two key variables.
+
+```{r dist, fig.width=12, fig.height=5}
+par(mfrow=c(1, 3))
+with(masterdf, 
+     hist(app_delta, 
+          ylab="", 
+          xlab="", 
+          main="Change in App Volume \n2007 - 2012"))
+with(masterdf, 
+     hist(app_delta_pct, 
+          ylab="", 
+          xlab="", 
+          main="% Change in App Volume \n2007 - 2012"))
+with(masterdf, 
+     hist(yrate_delta, 
+          ylab="", 
+          xlab="", 
+          main="Change in Yield Rate (PP) \n2007 - 2012"))
+
+```
+
+And the summary stats....
+
+```{r sumstats, cache=TRUE}
+summary(masterdf[,c("app_delta", "app_delta_pct" ,"yrate_delta")])
+
+```
+
+We can see from the stats above that the averge % change over the time period is around 35%, but one school grew by more than 600%!  Below is the list of the top 25 schools by % growth in apps.
+
+```{r outlier, cache=TRUE}
+tmp = subset(masterdf, select = c("instnm",
+                                  "apps7",
+                                  "apps12",
+                                  "app_delta",
+                                  "app_delta_pct",
+                                  "yrate_delta"))
+tmp = arrange(tmp, desc(app_delta_pct))
+head(tmp, 25)
+
+```
+
+
+Finally, lets create the scatter plot....
+
+```{r scatter, fig.width=8, fig.height=10}
+par(mfrow=c(1,1))
+g = ggplot(masterdf, aes(app_delta_pct, yrate_delta)) 
+g = g + geom_point(alpha=.55)
+g = g + xlab('% Change in Apps 2007 - 2012') + ylab('PP Change in Yield Rate')
+g = g + xlim(-7, 7) + ylim(-1, 1)
+g = g + geom_hline(aes(colour="red", yintercept=median(yrate_delta)))
+g = g + geom_vline(aes(colour="red", xintercept=median(app_delta_pct)))
+g = g + geom_text(data=NULL, x=4.5, y = -.9, label="App Growth, Drop Yield")
+g = g + geom_text(data=NULL, x=4.5, y = .9, label="App Growth, Increase Yield")
+g = g + geom_text(data=NULL, x=-4.5, y = .9, label="App Decline, Increase Yield")
+g = g + geom_text(data=NULL, x=-4.5, y = -.9, label="App Decline, Drop Yield")
+g
+
+```
+
+Because I am looking at a longer time horizon than the S&K post, the data look rather different.  We can see that the longer trend is that the majority of the schools ahd drops in yield.  Obviously it will be fun to look at these groups in segements.
+
+```{r segments, cache=TRUE, echo=FALSE}
+masterdf$segment = NA
+masterdf$segment[masterdf$app_delta_pct >= median(masterdf$app_delta_pct) &
+                   masterdf$yrate_delta >= median(masterdf$yrate_delta)] = 'High App / High Yield'
+masterdf$segment[masterdf$app_delta_pct >= median(masterdf$app_delta_pct) &
+                   masterdf$yrate_delta < median(masterdf$yrate_delta)] = 'High App / Low Yield'
+masterdf$segment[masterdf$app_delta_pct < median(masterdf$app_delta_pct) &
+                   masterdf$yrate_delta >= median(masterdf$yrate_delta)] = 'Low App / High Yield'
+masterdf$segment[masterdf$app_delta_pct < median(masterdf$app_delta_pct) &
+                   masterdf$yrate_delta < median(masterdf$yrate_delta)] = 'Low App / Low Yield'
+
+```
+
+```{r}
+## overall segments
+with(masterdf, table(segment))
+
+## table by sector and segments
+with(masterdf, table(segment, sector))
+
+```
+
+
+
+
+

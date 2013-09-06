@@ -1,0 +1,6 @@
+*.csv
+*.zip
+*.Rhistory
+*.rdata
+*.rds
+*.Rapp.history
