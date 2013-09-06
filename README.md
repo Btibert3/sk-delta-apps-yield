@@ -43,7 +43,7 @@ First, lets look at the distributions for the values we want to study:
 
 ![Distributions](https://raw.github.com/Btibert3/sk-delta-apps-yield/master/figure/distributions.png)
 
-By and large, the values are pretty well distributed.  We will be using some techniques that ignore the normality assumption (like we do most times anyway), but it's always nice to see distributions that are wildly skewed.
+By and large, the values are pretty well distributed.  We will be using some techniques that ignore the normality assumption (like we do most times anyway), but it's always nice to see distributions that are not wildly skewed.
 
 Below is a scattergraph that is similar, but not exactly the same, as the one in the post. Because this looks at a larger timeframe, the variance is much larger than what you see in the original post.
 
