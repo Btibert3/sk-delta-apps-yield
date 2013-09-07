@@ -89,7 +89,7 @@ To predict school X's 5-year change in yield, I simply average the 5-year change
 
 ## Summary
 
-The image belwo summarizes the performance for the 5 models.
+The image below summarizes the performance for the 5 models.
 
 ![outcomes](https://raw.github.com/Btibert3/sk-delta-apps-yield/master/figure/performance.png)
 
